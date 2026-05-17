@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c1418">
+<title>Stillness · Box Breathing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Manrope:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c1418;
+    --bg-2: #14242b;
+    --ink: #e9e3d6;
+    --ink-dim: rgba(233, 227, 214, 0.55);
+    --ink-faint: rgba(233, 227, 214, 0.16);
+    --accent: #d4a574;
+    --box: 280px;
+    --dot: 14px;
+  }
+  @media (min-width: 420px) { :root { --box: 320px; } }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: radial-gradient(ellipse at center top, var(--bg-2) 0%, var(--bg) 70%);
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: max(env(safe-area-inset-top), 28px) 20px max(env(safe-area-inset-bottom), 24px);
+    min-height: 100dvh;
+    position: relative;
+    animation: fade 1.2s ease-out;
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.45;
+    mix-blend-mode: overlay;
+    z-index: 0;
+  }
+
+  header { text-align: center; z-index: 1; }
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(30px, 8vw, 38px);
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    position: relative;
+    width: var(--box);
+    height: var(--box);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .frame { position: absolute; inset: 0; border: 1px solid var(--ink-faint); }
+  .frame::before, .frame::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--accent);
+  }
+  .frame::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .frame::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+  .breath {
+    width: 62%;
+    height: 62%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(212, 165, 116, 0.32), rgba(212, 165, 116, 0.06) 60%, transparent 80%);
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    transform: scale(0.5);
+    transition: transform var(--dur, 4s) cubic-bezier(0.45, 0, 0.55, 1);
+  }
+  .breath.expand { transform: scale(1); }
+
+  .dot {
+    position: absolute;
+    width: var(--dot);
+    height: var(--dot);
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 24px rgba(212, 165, 116, 0.55);
+    top: calc(100% - var(--dot) / 2);
+    left: calc(0% - var(--dot) / 2);
+    transition: top var(--dur, 4s) linear, left var(--dur, 4s) linear;
+  }
+
+  .center {
+    position: absolute;
+    text-align: center;
+    pointer-events: none;
+  }
+  .phase {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 24px;
+    letter-spacing: 0.01em;
+    margin-bottom: 8px;
+  }
+  .count {
+    font-weight: 300;
+    font-size: 13px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+  }
+
+  .controls {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 16px;
+  }
+  .stat { text-align: center; }
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .play {
+    background: transparent;
+    border: 1px solid var(--ink-faint);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 17px;
+    letter-spacing: 0.05em;
+    padding: 14px 44px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 160px;
+  }
+  .play:hover, .play:active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .pace {
+    display: flex;
+    gap: 2px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--ink-faint);
+    border-radius: 100px;
+    padding: 4px;
+  }
+  .pace button {
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 14px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pace button.active {
+    background: rgba(212, 165, 116, 0.14);
+    color: var(--accent);
+  }
+
+  footer {
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.7;
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Box Breathing</div>
+    <h1>Stillness</h1>
+  </header>
+
+  <div class="stage">
+    <div class="frame"></div>
+    <div class="breath" id="breath"></div>
+    <div class="dot" id="dot"></div>
+    <div class="center">
+      <div class="phase" id="phase">Begin</div>
+      <div class="count" id="count">— —</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Cycle</div>
+        <div class="stat-value" id="cycles">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Pace</div>
+        <div class="stat-value" id="paceLabel">4</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Time</div>
+        <div class="stat-value" id="time">0:00</div>
+      </div>
+    </div>
+
+    <button class="play" id="play">Begin</button>
+
+    <div class="pace" role="group" aria-label="Seconds per phase">
+      <button data-sec="3">3s</button>
+      <button data-sec="4" class="active">4s</button>
+      <button data-sec="5">5s</button>
+      <button data-sec="6">6s</button>
+      <button data-sec="7">7s</button>
+    </div>
+  </div>
+
+  <footer>
+    Inhale · Hold · Exhale · Hold<br>
+    Tap to reset after a session.
+  </footer>
+
+<script>
+(() => {
+  const phases = [
+    { name: 'Inhale', dotTop: '0%',   dotLeft: '0%',   breath: 'expand' },
+    { name: 'Hold',   dotTop: '0%',   dotLeft: '100%', breath: 'hold' },
+    { name: 'Exhale', dotTop: '100%', dotLeft: '100%', breath: 'contract' },
+    { name: 'Hold',   dotTop: '100%', dotLeft: '0%',   breath: 'hold' }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    breath: $('breath'), dot: $('dot'),
+    phase: $('phase'), count: $('count'),
+    cycles: $('cycles'), time: $('time'),
+    play: $('play'), paceLabel: $('paceLabel'),
+    pace: document.querySelectorAll('.pace button')
+  };
+
+  let running = false;
+  let phaseIdx = -1;
+  let secPerPhase = 4;
+  let remaining = secPerPhase;
+  let cycles = 0;
+  let totalSec = 0;
+  let tickInterval = null;
+
+  function applyPhase(idx) {
+    const p = phases[idx];
+    els.phase.textContent = p.name;
+    els.dot.style.setProperty('--dur', secPerPhase + 's');
+    els.breath.style.setProperty('--dur', secPerPhase + 's');
+    els.dot.style.transition = `top ${secPerPhase}s linear, left ${secPerPhase}s linear`;
+    els.breath.style.transition = `transform ${secPerPhase}s cubic-bezier(0.45, 0, 0.55, 1)`;
+
+    void els.dot.offsetWidth;
+    els.dot.style.top  = `calc(${p.dotTop} - var(--dot) / 2)`;
+    els.dot.style.left = `calc(${p.dotLeft} - var(--dot) / 2)`;
+
+    if (p.breath === 'expand') els.breath.classList.add('expand');
+    else if (p.breath === 'contract') els.breath.classList.remove('expand');
+
+    remaining = secPerPhase;
+    els.count.textContent = remaining;
+  }
+
+  function tick() {
+    if (!running) return;
+    remaining--;
+    totalSec++;
+    const m = Math.floor(totalSec / 60);
+    const s = String(totalSec % 60).padStart(2, '0');
+    els.time.textContent = `${m}:${s}`;
+
+    if (remaining <= 0) {
+      phaseIdx = (phaseIdx + 1) % 4;
+      if (phaseIdx === 0) {
+        cycles++;
+        els.cycles.textContent = cycles;
+      }
+      applyPhase(phaseIdx);
+    } else {
+      els.count.textContent = remaining;
+    }
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    els.play.textContent = 'Pause';
+
+    if (phaseIdx < 0) {
+      phaseIdx = 0;
+      applyPhase(0);
+    } else {
+      // Resume mid-phase: continue toward current phase target over remaining seconds
+      const p = phases[phaseIdx];
+      const dur = Math.max(remaining, 0.1) + 's';
+      els.dot.style.transition = `top ${dur} linear, left ${dur} linear`;
+      els.breath.style.transition = `transform ${dur} cubic-bezier(0.45, 0, 0.55, 1)`;
+      void els.dot.offsetWidth;
+      els.dot.style.top  = `calc(${p.dotTop} - var(--dot) / 2)`;
+      els.dot.style.left = `calc(${p.dotLeft} - var(--dot) / 2)`;
+      if (p.breath === 'expand') els.breath.classList.add('expand');
+      else if (p.breath === 'contract') els.breath.classList.remove('expand');
+    }
+
+    tickInterval = setInterval(tick, 1000);
+  }
+
+  function pause() {
+    if (!running) return;
+    running = false;
+    els.play.textContent = 'Resume';
+    clearInterval(tickInterval);
+
+    // Freeze animations at current visual state
+    const dotS = getComputedStyle(els.dot);
+    const breathS = getComputedStyle(els.breath);
+    const frozenTop = dotS.top;
+    const frozenLeft = dotS.left;
+    const frozenT = breathS.transform;
+
+    els.dot.style.transition = 'none';
+    els.breath.style.transition = 'none';
+    els.dot.style.top = frozenTop;
+    els.dot.style.left = frozenLeft;
+    els.breath.style.transform = frozenT;
+  }
+
+  function reset() {
+    running = false;
+    clearInterval(tickInterval);
+    phaseIdx = -1;
+    cycles = 0;
+    totalSec = 0;
+    remaining = secPerPhase;
+    els.cycles.textContent = '0';
+    els.time.textContent = '0:00';
+    els.count.textContent = '— —';
+    els.phase.textContent = 'Begin';
+    els.play.textContent = 'Begin';
+    els.breath.classList.remove('expand');
+    els.breath.style.transform = '';
+    els.dot.style.transition = 'none';
+    els.dot.style.top  = `calc(100% - var(--dot) / 2)`;
+    els.dot.style.left = `calc(0% - var(--dot) / 2)`;
+    void els.dot.offsetWidth;
+  }
+
+  els.play.addEventListener('click', () => {
+    if (running) pause();
+    else start();
+  });
+
+  // Tap the stage to reset
+  document.querySelector('.stage').addEventListener('click', () => {
+    if (phaseIdx >= 0) reset();
+  });
+
+  els.pace.forEach(btn => {
+    btn.addEventListener('click', () => {
+      els.pace.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      secPerPhase = parseInt(btn.dataset.sec, 10);
+      els.paceLabel.textContent = secPerPhase;
+      if (!running && phaseIdx < 0) {
+        remaining = secPerPhase;
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
