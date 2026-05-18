@@ -16,13 +16,13 @@
     --ink-dim: rgba(233, 227, 214, 0.55);
     --ink-faint: rgba(233, 227, 214, 0.16);
     --accent: #d4a574;
-    --box: 280px;
+    --box: 260px;
     --dot: 14px;
   }
-  @media (min-width: 420px) { :root { --box: 320px; } }
+  @media (min-width: 420px) { :root { --box: 300px; } }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
+  html, body { height: 100%; }
 
   body {
     background: radial-gradient(ellipse at center top, var(--bg-2) 0%, var(--bg) 70%);
@@ -34,8 +34,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: max(env(safe-area-inset-top), 28px) 20px max(env(safe-area-inset-bottom), 24px);
+    padding: max(env(safe-area-inset-top), 24px) 20px max(env(safe-area-inset-bottom), 20px);
     min-height: 100dvh;
+    overflow-y: auto;
     position: relative;
     animation: fade 1.2s ease-out;
   }
@@ -52,21 +53,48 @@
     z-index: 0;
   }
 
-  header { text-align: center; z-index: 1; }
+  header {
+    text-align: center;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 360px;
+  }
+  .header-center { flex: 1; text-align: center; }
   .eyebrow {
     font-size: 10px;
     letter-spacing: 0.35em;
     text-transform: uppercase;
     color: var(--ink-dim);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   h1 {
     font-family: 'Fraunces', serif;
     font-weight: 300;
     font-style: italic;
-    font-size: clamp(30px, 8vw, 38px);
+    font-size: clamp(26px, 7vw, 34px);
     letter-spacing: -0.01em;
   }
+
+  .history-btn {
+    background: transparent;
+    border: 1px solid var(--ink-faint);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .history-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .history-btn svg { width: 15px; height: 15px; fill: currentColor; }
 
   .stage {
     position: relative;
@@ -121,7 +149,7 @@
     font-family: 'Fraunces', serif;
     font-style: italic;
     font-weight: 300;
-    font-size: 24px;
+    font-size: 22px;
     letter-spacing: 0.01em;
     margin-bottom: 8px;
   }
@@ -138,9 +166,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
     width: 100%;
-    max-width: 380px;
+    max-width: 360px;
   }
 
   .stats {
@@ -160,7 +188,7 @@
   .stat-value {
     font-family: 'Fraunces', serif;
     font-weight: 300;
-    font-size: 22px;
+    font-size: 20px;
     font-variant-numeric: tabular-nums;
   }
 
@@ -180,13 +208,9 @@
     -webkit-tap-highlight-color: transparent;
     min-width: 160px;
   }
-  .play:hover, .play:active {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
+  .play:hover, .play:active { border-color: var(--accent); color: var(--accent); }
 
-  /* Pattern picker */
-  .patterns {
+  .pace {
     display: flex;
     gap: 2px;
     background: rgba(255,255,255,0.025);
@@ -194,23 +218,115 @@
     border-radius: 100px;
     padding: 4px;
   }
-  .patterns button {
+  .pace button {
     background: transparent;
     border: none;
     color: var(--ink-dim);
     font-family: 'Manrope', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 400;
-    padding: 8px 13px;
+    padding: 8px 12px;
     border-radius: 100px;
     cursor: pointer;
     transition: all 0.3s ease;
     -webkit-tap-highlight-color: transparent;
-    white-space: nowrap;
   }
-  .patterns button.active {
-    background: rgba(212, 165, 116, 0.14);
-    color: var(--accent);
+  .pace button.active { background: rgba(212, 165, 116, 0.14); color: var(--accent); }
+
+  /* History drawer */
+  .drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .drawer.open { opacity: 1; pointer-events: all; }
+  .drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(12, 20, 24, 0.7);
+    backdrop-filter: blur(4px);
+  }
+  .drawer-panel {
+    position: relative;
+    width: 100%;
+    max-height: 65vh;
+    background: #182830;
+    border-top: 1px solid var(--ink-faint);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 24px max(env(safe-area-inset-bottom), 24px);
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow-y: auto;
+  }
+  .drawer.open .drawer-panel { transform: translateY(0); }
+
+  .drawer-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--ink-faint);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .drawer-title {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .clear-btn {
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    color: var(--ink-dim);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    padding: 4px 0;
+  }
+  .clear-btn:hover { color: var(--accent); }
+
+  .session-list { display: flex; flex-direction: column; gap: 10px; }
+  .session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--ink-faint);
+    border-radius: 10px;
+    animation: slideUp 0.3s ease both;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .session-date { font-size: 12px; color: var(--ink-dim); margin-bottom: 4px; }
+  .session-detail {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+  }
+  .session-meta {
+    text-align: right;
+    font-size: 11px;
+    color: var(--ink-dim);
+    line-height: 1.8;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--ink-dim);
+    font-size: 13px;
+    font-style: italic;
+    font-family: 'Fraunces', serif;
   }
 
   footer {
@@ -223,19 +339,18 @@
     font-family: 'Fraunces', serif;
     z-index: 1;
   }
-  .pattern-desc {
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    color: var(--ink-dim);
-    text-align: center;
-    font-family: 'Manrope', sans-serif;
-  }
 </style>
 </head>
 <body>
   <header>
-    <div class="eyebrow">Breathing Practice</div>
-    <h1>Stillness</h1>
+    <div style="width:36px"></div>
+    <div class="header-center">
+      <div class="eyebrow">Box Breathing</div>
+      <h1>Stillness</h1>
+    </div>
+    <button class="history-btn" id="historyBtn" aria-label="Session history">
+      <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    </button>
   </header>
 
   <div class="stage">
@@ -255,108 +370,135 @@
         <div class="stat-value" id="cycles">0</div>
       </div>
       <div class="stat">
-        <div class="stat-label">Pattern</div>
-        <div class="stat-value" id="patternLabel">Box</div>
+        <div class="stat-label">Pace</div>
+        <div class="stat-value" id="paceLabel">4</div>
       </div>
       <div class="stat">
         <div class="stat-label">Time</div>
         <div class="stat-value" id="time">0:00</div>
       </div>
     </div>
-
     <button class="play" id="play">Begin</button>
-
-    <div class="patterns" role="group" aria-label="Breathing pattern">
-      <button data-pattern="box" class="active">Box 4-4-4-4</button>
-      <button data-pattern="478">4-7-8</button>
-      <button data-pattern="resonance">Resonance</button>
+    <div class="pace" role="group" aria-label="Seconds per phase">
+      <button data-sec="3">3s</button>
+      <button data-sec="4" class="active">4s</button>
+      <button data-sec="5">5s</button>
+      <button data-sec="6">6s</button>
+      <button data-sec="7">7s</button>
     </div>
-
-    <div class="pattern-desc" id="patternDesc">Inhale · Hold · Exhale · Hold — equal sides</div>
   </div>
 
   <footer>
-    Tap the box to reset.
+    Inhale · Hold · Exhale · Hold<br>
+    Tap box to reset. Sessions saved locally.
   </footer>
+
+  <!-- History drawer -->
+  <div class="drawer" id="drawer">
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <div class="drawer-panel">
+      <div class="drawer-handle"></div>
+      <div class="drawer-title">
+        Sessions
+        <button class="clear-btn" id="clearBtn">Clear all</button>
+      </div>
+      <div class="session-list" id="sessionList"></div>
+    </div>
+  </div>
 
 <script>
 (() => {
-  // Each pattern: array of { name, sec, dotTop, dotLeft, breath }
-  const PATTERNS = {
-    box: {
-      label: 'Box',
-      desc: 'Inhale · Hold · Exhale · Hold — equal sides',
-      phases: [
-        { name: 'Inhale',  sec: 4, dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
-        { name: 'Hold',    sec: 4, dotTop: '0%',   dotLeft: '100%', breath: 'hold'     },
-        { name: 'Exhale',  sec: 4, dotTop: '100%', dotLeft: '100%', breath: 'contract' },
-        { name: 'Hold',    sec: 4, dotTop: '100%', dotLeft: '0%',   breath: 'hold'     }
-      ]
-    },
-    '478': {
-      label: '4-7-8',
-      desc: 'Inhale 4s · Hold 7s · Exhale 8s — for sleep & calm',
-      phases: [
-        { name: 'Inhale',  sec: 4, dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
-        { name: 'Hold',    sec: 7, dotTop: '0%',   dotLeft: '100%', breath: 'hold'     },
-        { name: 'Exhale',  sec: 8, dotTop: '100%', dotLeft: '100%', breath: 'contract' },
-        { name: '--',      sec: 0, dotTop: '100%', dotLeft: '0%',   breath: 'hold', skip: true }
-      ]
-    },
-    resonance: {
-      label: 'Resonance',
-      desc: 'Inhale 5s · Exhale 5s — heart rate variability',
-      phases: [
-        { name: 'Inhale',  sec: 5, dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
-        { name: 'Exhale',  sec: 5, dotTop: '100%', dotLeft: '100%', breath: 'contract' }
-      ]
-    }
-  };
+  const phases = [
+    { name: 'Inhale',  dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
+    { name: 'Hold',    dotTop: '0%',   dotLeft: '100%', breath: 'hold'     },
+    { name: 'Exhale',  dotTop: '100%', dotLeft: '100%', breath: 'contract' },
+    { name: 'Hold',    dotTop: '100%', dotLeft: '0%',   breath: 'hold'     }
+  ];
 
   const $ = id => document.getElementById(id);
   const els = {
     breath: $('breath'), dot: $('dot'),
     phase: $('phase'), count: $('count'),
     cycles: $('cycles'), time: $('time'),
-    play: $('play'), patternLabel: $('patternLabel'),
-    patternDesc: $('patternDesc'),
-    patternBtns: document.querySelectorAll('.patterns button')
+    play: $('play'), paceLabel: $('paceLabel'),
+    pace: document.querySelectorAll('.pace button'),
+    historyBtn: $('historyBtn'), drawer: $('drawer'),
+    drawerBackdrop: $('drawerBackdrop'),
+    sessionList: $('sessionList'), clearBtn: $('clearBtn')
   };
 
   let running = false;
   let phaseIdx = -1;
-  let patternKey = 'box';
-  let remaining = 0;
+  let secPerPhase = 4;
+  let remaining = secPerPhase;
   let cycles = 0;
   let totalSec = 0;
   let tickInterval = null;
+  let sessionStart = null;
 
-  function currentPhases() { return PATTERNS[patternKey].phases; }
+  // ── Session storage ───────────────────────────────────────────────────────
+  function loadSessions() {
+    try { return JSON.parse(localStorage.getItem('stillness-sessions') || '[]'); }
+    catch { return []; }
+  }
+  function saveSessions(sessions) {
+    try { localStorage.setItem('stillness-sessions', JSON.stringify(sessions.slice(-30))); }
+    catch {}
+  }
+  function saveSession() {
+    if (cycles === 0) return;
+    const sessions = loadSessions();
+    sessions.push({
+      date: new Date().toISOString(),
+      cycles,
+      totalSec,
+      pace: secPerPhase
+    });
+    saveSessions(sessions);
+  }
 
-  function applyPhase(idx) {
-    const phases = currentPhases();
-    const p = phases[idx];
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+      + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+  function fmtTime(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  }
 
-    // Skip zero-sec phases
-    if (p.skip || p.sec === 0) {
-      phaseIdx = (phaseIdx + 1) % phases.length;
-      if (phaseIdx === 0) { cycles++; els.cycles.textContent = cycles; }
-      applyPhase(phaseIdx);
+  function renderHistory() {
+    const sessions = loadSessions().slice().reverse();
+    if (!sessions.length) {
+      els.sessionList.innerHTML = '<div class="empty-state">No sessions yet.<br>Complete a session to see it here.</div>';
       return;
     }
+    els.sessionList.innerHTML = sessions.map((s, i) => `
+      <div class="session-item" style="animation-delay:${i * 0.05}s">
+        <div>
+          <div class="session-date">${fmtDate(s.date)}</div>
+          <div class="session-detail">${s.cycles} cycle${s.cycles !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="session-meta">
+          ${fmtTime(s.totalSec)}<br>
+          ${s.pace}s pace
+        </div>
+      </div>
+    `).join('');
+  }
 
+  // ── Breathing logic ───────────────────────────────────────────────────────
+  function applyPhase(idx) {
+    const p = phases[idx];
     els.phase.textContent = p.name;
-    els.dot.style.transition = `top ${p.sec}s linear, left ${p.sec}s linear`;
-    els.breath.style.transition = `transform ${p.sec}s cubic-bezier(0.45, 0, 0.55, 1)`;
-
+    els.dot.style.transition = `top ${secPerPhase}s linear, left ${secPerPhase}s linear`;
+    els.breath.style.transition = `transform ${secPerPhase}s cubic-bezier(0.45, 0, 0.55, 1)`;
     void els.dot.offsetWidth;
     els.dot.style.top  = `calc(${p.dotTop} - var(--dot) / 2)`;
     els.dot.style.left = `calc(${p.dotLeft} - var(--dot) / 2)`;
-
     if (p.breath === 'expand') els.breath.classList.add('expand');
     else if (p.breath === 'contract') els.breath.classList.remove('expand');
-
-    remaining = p.sec;
+    remaining = secPerPhase;
     els.count.textContent = remaining;
   }
 
@@ -364,13 +506,10 @@
     if (!running) return;
     remaining--;
     totalSec++;
-    const m = Math.floor(totalSec / 60);
-    const s = String(totalSec % 60).padStart(2, '0');
+    const m = Math.floor(totalSec / 60), s = String(totalSec % 60).padStart(2, '0');
     els.time.textContent = `${m}:${s}`;
-
     if (remaining <= 0) {
-      const phases = currentPhases();
-      phaseIdx = (phaseIdx + 1) % phases.length;
+      phaseIdx = (phaseIdx + 1) % 4;
       if (phaseIdx === 0) { cycles++; els.cycles.textContent = cycles; }
       applyPhase(phaseIdx);
     } else {
@@ -382,7 +521,19 @@
     if (running) return;
     running = true;
     els.play.textContent = 'Pause';
+    if (!sessionStart) sessionStart = Date.now();
     if (phaseIdx < 0) { phaseIdx = 0; applyPhase(0); }
+    else {
+      const p = phases[phaseIdx];
+      const dur = Math.max(remaining, 0.1) + 's';
+      els.dot.style.transition = `top ${dur} linear, left ${dur} linear`;
+      els.breath.style.transition = `transform ${dur} cubic-bezier(0.45, 0, 0.55, 1)`;
+      void els.dot.offsetWidth;
+      els.dot.style.top  = `calc(${p.dotTop} - var(--dot) / 2)`;
+      els.dot.style.left = `calc(${p.dotLeft} - var(--dot) / 2)`;
+      if (p.breath === 'expand') els.breath.classList.add('expand');
+      else if (p.breath === 'contract') els.breath.classList.remove('expand');
+    }
     tickInterval = setInterval(tick, 1000);
   }
 
@@ -391,8 +542,7 @@
     running = false;
     els.play.textContent = 'Resume';
     clearInterval(tickInterval);
-    const dotS = getComputedStyle(els.dot);
-    const breathS = getComputedStyle(els.breath);
+    const dotS = getComputedStyle(els.dot), breathS = getComputedStyle(els.breath);
     els.dot.style.transition = 'none';
     els.breath.style.transition = 'none';
     els.dot.style.top = dotS.top;
@@ -401,41 +551,46 @@
   }
 
   function reset() {
-    running = false;
-    clearInterval(tickInterval);
-    phaseIdx = -1; cycles = 0; totalSec = 0;
-    remaining = currentPhases()[0].sec;
-    els.cycles.textContent = '0';
-    els.time.textContent = '0:00';
-    els.count.textContent = '— —';
-    els.phase.textContent = 'Begin';
-    els.play.textContent = 'Begin';
-    els.breath.classList.remove('expand');
-    els.breath.style.transform = '';
+    if (running) saveSession();
+    pause();
+    phaseIdx = -1; cycles = 0; totalSec = 0; remaining = secPerPhase; sessionStart = null;
+    els.cycles.textContent = '0'; els.time.textContent = '0:00';
+    els.count.textContent = '— —'; els.phase.textContent = 'Begin'; els.play.textContent = 'Begin';
+    els.breath.classList.remove('expand'); els.breath.style.transform = '';
     els.dot.style.transition = 'none';
     els.dot.style.top  = `calc(100% - var(--dot) / 2)`;
     els.dot.style.left = `calc(0% - var(--dot) / 2)`;
     void els.dot.offsetWidth;
   }
 
+  // ── Events ────────────────────────────────────────────────────────────────
   els.play.addEventListener('click', () => { if (running) pause(); else start(); });
+  document.querySelector('.stage').addEventListener('click', () => { if (phaseIdx >= 0) reset(); });
 
-  document.querySelector('.stage').addEventListener('click', () => {
-    if (phaseIdx >= 0) reset();
-  });
-
-  els.patternBtns.forEach(btn => {
+  els.pace.forEach(btn => {
     btn.addEventListener('click', () => {
-      if (running) return; // don't switch mid-session
-      els.patternBtns.forEach(b => b.classList.remove('active'));
+      els.pace.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      patternKey = btn.dataset.pattern;
-      const p = PATTERNS[patternKey];
-      els.patternLabel.textContent = p.label;
-      els.patternDesc.textContent = p.desc;
-      reset();
+      secPerPhase = parseInt(btn.dataset.sec, 10);
+      els.paceLabel.textContent = secPerPhase;
+      if (!running && phaseIdx < 0) remaining = secPerPhase;
     });
   });
+
+  els.historyBtn.addEventListener('click', () => {
+    renderHistory();
+    els.drawer.classList.add('open');
+  });
+  els.drawerBackdrop.addEventListener('click', () => els.drawer.classList.remove('open'));
+  els.clearBtn.addEventListener('click', () => {
+    if (confirm('Clear all session history?')) {
+      localStorage.removeItem('stillness-sessions');
+      renderHistory();
+    }
+  });
+
+  // Save session when page unloads mid-session
+  window.addEventListener('beforeunload', () => { if (running || phaseIdx >= 0) saveSession(); });
 })();
 </script>
 </body>
