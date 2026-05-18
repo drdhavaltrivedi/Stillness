@@ -140,7 +140,7 @@
     align-items: center;
     gap: 18px;
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
   }
 
   .stats {
@@ -185,7 +185,8 @@
     color: var(--accent);
   }
 
-  .pace {
+  /* Pattern picker */
+  .patterns {
     display: flex;
     gap: 2px;
     background: rgba(255,255,255,0.025);
@@ -193,56 +194,23 @@
     border-radius: 100px;
     padding: 4px;
   }
-  .pace button {
+  .patterns button {
     background: transparent;
     border: none;
     color: var(--ink-dim);
     font-family: 'Manrope', sans-serif;
-    font-size: 12px;
-    font-weight: 400;
-    padding: 8px 14px;
-    border-radius: 100px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .pace button.active {
-    background: rgba(212, 165, 116, 0.14);
-    color: var(--accent);
-  }
-
-  /* Sound + Haptic toggles */
-  .toggles {
-    display: flex;
-    gap: 10px;
-  }
-  .toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid var(--ink-faint);
-    border-radius: 100px;
-    color: var(--ink-dim);
-    font-family: 'Manrope', sans-serif;
     font-size: 11px;
     font-weight: 400;
-    padding: 7px 14px;
+    padding: 8px 13px;
+    border-radius: 100px;
     cursor: pointer;
     transition: all 0.3s ease;
     -webkit-tap-highlight-color: transparent;
-    letter-spacing: 0.05em;
+    white-space: nowrap;
   }
-  .toggle-btn.on {
-    border-color: rgba(212, 165, 116, 0.4);
+  .patterns button.active {
+    background: rgba(212, 165, 116, 0.14);
     color: var(--accent);
-    background: rgba(212, 165, 116, 0.08);
-  }
-  .toggle-btn svg {
-    width: 13px;
-    height: 13px;
-    fill: currentColor;
-    flex-shrink: 0;
   }
 
   footer {
@@ -255,11 +223,18 @@
     font-family: 'Fraunces', serif;
     z-index: 1;
   }
+  .pattern-desc {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    text-align: center;
+    font-family: 'Manrope', sans-serif;
+  }
 </style>
 </head>
 <body>
   <header>
-    <div class="eyebrow">Box Breathing</div>
+    <div class="eyebrow">Breathing Practice</div>
     <h1>Stillness</h1>
   </header>
 
@@ -280,8 +255,8 @@
         <div class="stat-value" id="cycles">0</div>
       </div>
       <div class="stat">
-        <div class="stat-label">Pace</div>
-        <div class="stat-value" id="paceLabel">4</div>
+        <div class="stat-label">Pattern</div>
+        <div class="stat-value" id="patternLabel">Box</div>
       </div>
       <div class="stat">
         <div class="stat-label">Time</div>
@@ -291,104 +266,88 @@
 
     <button class="play" id="play">Begin</button>
 
-    <div class="pace" role="group" aria-label="Seconds per phase">
-      <button data-sec="3">3s</button>
-      <button data-sec="4" class="active">4s</button>
-      <button data-sec="5">5s</button>
-      <button data-sec="6">6s</button>
-      <button data-sec="7">7s</button>
+    <div class="patterns" role="group" aria-label="Breathing pattern">
+      <button data-pattern="box" class="active">Box 4-4-4-4</button>
+      <button data-pattern="478">4-7-8</button>
+      <button data-pattern="resonance">Resonance</button>
     </div>
 
-    <div class="toggles">
-      <button class="toggle-btn" id="soundBtn" aria-pressed="false">
-        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-        Sound
-      </button>
-      <button class="toggle-btn" id="hapticBtn" aria-pressed="false">
-        <svg viewBox="0 0 24 24"><path d="M16 9.5C16 7.57 14.43 6 12.5 6S9 7.57 9 9.5v5c0 1.93 1.57 3.5 3.5 3.5s3.5-1.57 3.5-3.5v-5zM12.5 4C15.54 4 18 6.46 18 9.5V14.5C18 17.54 15.54 20 12.5 20S7 17.54 7 14.5V9.5C7 6.46 9.46 4 12.5 4zM11 1H14V3H11zM11 21H14V23H11zM1 11H3V13H1zM21 11H23V13H21z"/></svg>
-        Haptic
-      </button>
-    </div>
+    <div class="pattern-desc" id="patternDesc">Inhale · Hold · Exhale · Hold — equal sides</div>
   </div>
 
   <footer>
-    Inhale · Hold · Exhale · Hold<br>
-    Tap box to reset.
+    Tap the box to reset.
   </footer>
 
 <script>
 (() => {
-  const phases = [
-    { name: 'Inhale',  dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
-    { name: 'Hold',    dotTop: '0%',   dotLeft: '100%', breath: 'hold'     },
-    { name: 'Exhale',  dotTop: '100%', dotLeft: '100%', breath: 'contract' },
-    { name: 'Hold',    dotTop: '100%', dotLeft: '0%',   breath: 'hold'     }
-  ];
-
-  // Phase tones (Hz): inhale, hold, exhale, hold
-  const TONES = [528, 432, 396, 432];
+  // Each pattern: array of { name, sec, dotTop, dotLeft, breath }
+  const PATTERNS = {
+    box: {
+      label: 'Box',
+      desc: 'Inhale · Hold · Exhale · Hold — equal sides',
+      phases: [
+        { name: 'Inhale',  sec: 4, dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
+        { name: 'Hold',    sec: 4, dotTop: '0%',   dotLeft: '100%', breath: 'hold'     },
+        { name: 'Exhale',  sec: 4, dotTop: '100%', dotLeft: '100%', breath: 'contract' },
+        { name: 'Hold',    sec: 4, dotTop: '100%', dotLeft: '0%',   breath: 'hold'     }
+      ]
+    },
+    '478': {
+      label: '4-7-8',
+      desc: 'Inhale 4s · Hold 7s · Exhale 8s — for sleep & calm',
+      phases: [
+        { name: 'Inhale',  sec: 4, dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
+        { name: 'Hold',    sec: 7, dotTop: '0%',   dotLeft: '100%', breath: 'hold'     },
+        { name: 'Exhale',  sec: 8, dotTop: '100%', dotLeft: '100%', breath: 'contract' },
+        { name: '--',      sec: 0, dotTop: '100%', dotLeft: '0%',   breath: 'hold', skip: true }
+      ]
+    },
+    resonance: {
+      label: 'Resonance',
+      desc: 'Inhale 5s · Exhale 5s — heart rate variability',
+      phases: [
+        { name: 'Inhale',  sec: 5, dotTop: '0%',   dotLeft: '0%',   breath: 'expand'   },
+        { name: 'Exhale',  sec: 5, dotTop: '100%', dotLeft: '100%', breath: 'contract' }
+      ]
+    }
+  };
 
   const $ = id => document.getElementById(id);
   const els = {
     breath: $('breath'), dot: $('dot'),
     phase: $('phase'), count: $('count'),
     cycles: $('cycles'), time: $('time'),
-    play: $('play'), paceLabel: $('paceLabel'),
-    pace: document.querySelectorAll('.pace button'),
-    soundBtn: $('soundBtn'), hapticBtn: $('hapticBtn')
+    play: $('play'), patternLabel: $('patternLabel'),
+    patternDesc: $('patternDesc'),
+    patternBtns: document.querySelectorAll('.patterns button')
   };
 
   let running = false;
   let phaseIdx = -1;
-  let secPerPhase = 4;
-  let remaining = secPerPhase;
+  let patternKey = 'box';
+  let remaining = 0;
   let cycles = 0;
   let totalSec = 0;
   let tickInterval = null;
-  let soundOn = false;
-  let hapticOn = false;
-  let audioCtx = null;
 
-  // ── Audio ─────────────────────────────────────────────────────────────────
-  function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-  }
+  function currentPhases() { return PATTERNS[patternKey].phases; }
 
-  function playTone(freq, duration = 0.18) {
-    if (!soundOn) return;
-    try {
-      const ctx = getAudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + duration);
-    } catch (e) {}
-  }
-
-  // ── Haptic ────────────────────────────────────────────────────────────────
-  function vibrate(pattern) {
-    if (!hapticOn) return;
-    if ('vibrate' in navigator) {
-      try { navigator.vibrate(pattern); } catch (e) {}
-    }
-  }
-
-  // ── Phase logic ───────────────────────────────────────────────────────────
   function applyPhase(idx) {
+    const phases = currentPhases();
     const p = phases[idx];
+
+    // Skip zero-sec phases
+    if (p.skip || p.sec === 0) {
+      phaseIdx = (phaseIdx + 1) % phases.length;
+      if (phaseIdx === 0) { cycles++; els.cycles.textContent = cycles; }
+      applyPhase(phaseIdx);
+      return;
+    }
+
     els.phase.textContent = p.name;
-    els.dot.style.setProperty('--dur', secPerPhase + 's');
-    els.breath.style.setProperty('--dur', secPerPhase + 's');
-    els.dot.style.transition = `top ${secPerPhase}s linear, left ${secPerPhase}s linear`;
-    els.breath.style.transition = `transform ${secPerPhase}s cubic-bezier(0.45, 0, 0.55, 1)`;
+    els.dot.style.transition = `top ${p.sec}s linear, left ${p.sec}s linear`;
+    els.breath.style.transition = `transform ${p.sec}s cubic-bezier(0.45, 0, 0.55, 1)`;
 
     void els.dot.offsetWidth;
     els.dot.style.top  = `calc(${p.dotTop} - var(--dot) / 2)`;
@@ -397,10 +356,7 @@
     if (p.breath === 'expand') els.breath.classList.add('expand');
     else if (p.breath === 'contract') els.breath.classList.remove('expand');
 
-    playTone(TONES[idx]);
-    vibrate(idx === 0 ? [30, 10, 30] : [20]);
-
-    remaining = secPerPhase;
+    remaining = p.sec;
     els.count.textContent = remaining;
   }
 
@@ -413,7 +369,8 @@
     els.time.textContent = `${m}:${s}`;
 
     if (remaining <= 0) {
-      phaseIdx = (phaseIdx + 1) % 4;
+      const phases = currentPhases();
+      phaseIdx = (phaseIdx + 1) % phases.length;
       if (phaseIdx === 0) { cycles++; els.cycles.textContent = cycles; }
       applyPhase(phaseIdx);
     } else {
@@ -423,25 +380,9 @@
 
   function start() {
     if (running) return;
-    // Resume AudioContext if suspended (browser autoplay policy)
-    if (soundOn && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     running = true;
     els.play.textContent = 'Pause';
-
-    if (phaseIdx < 0) {
-      phaseIdx = 0;
-      applyPhase(0);
-    } else {
-      const p = phases[phaseIdx];
-      const dur = Math.max(remaining, 0.1) + 's';
-      els.dot.style.transition = `top ${dur} linear, left ${dur} linear`;
-      els.breath.style.transition = `transform ${dur} cubic-bezier(0.45, 0, 0.55, 1)`;
-      void els.dot.offsetWidth;
-      els.dot.style.top  = `calc(${p.dotTop} - var(--dot) / 2)`;
-      els.dot.style.left = `calc(${p.dotLeft} - var(--dot) / 2)`;
-      if (p.breath === 'expand') els.breath.classList.add('expand');
-      else if (p.breath === 'contract') els.breath.classList.remove('expand');
-    }
+    if (phaseIdx < 0) { phaseIdx = 0; applyPhase(0); }
     tickInterval = setInterval(tick, 1000);
   }
 
@@ -450,7 +391,6 @@
     running = false;
     els.play.textContent = 'Resume';
     clearInterval(tickInterval);
-
     const dotS = getComputedStyle(els.dot);
     const breathS = getComputedStyle(els.breath);
     els.dot.style.transition = 'none';
@@ -463,7 +403,8 @@
   function reset() {
     running = false;
     clearInterval(tickInterval);
-    phaseIdx = -1; cycles = 0; totalSec = 0; remaining = secPerPhase;
+    phaseIdx = -1; cycles = 0; totalSec = 0;
+    remaining = currentPhases()[0].sec;
     els.cycles.textContent = '0';
     els.time.textContent = '0:00';
     els.count.textContent = '— —';
@@ -477,39 +418,23 @@
     void els.dot.offsetWidth;
   }
 
-  // ── Controls ──────────────────────────────────────────────────────────────
-  els.play.addEventListener('click', () => {
-    if (soundOn && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    if (running) pause(); else start();
-  });
+  els.play.addEventListener('click', () => { if (running) pause(); else start(); });
 
   document.querySelector('.stage').addEventListener('click', () => {
     if (phaseIdx >= 0) reset();
   });
 
-  els.pace.forEach(btn => {
+  els.patternBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      els.pace.forEach(b => b.classList.remove('active'));
+      if (running) return; // don't switch mid-session
+      els.patternBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      secPerPhase = parseInt(btn.dataset.sec, 10);
-      els.paceLabel.textContent = secPerPhase;
-      if (!running && phaseIdx < 0) remaining = secPerPhase;
+      patternKey = btn.dataset.pattern;
+      const p = PATTERNS[patternKey];
+      els.patternLabel.textContent = p.label;
+      els.patternDesc.textContent = p.desc;
+      reset();
     });
-  });
-
-  els.soundBtn.addEventListener('click', () => {
-    soundOn = !soundOn;
-    els.soundBtn.classList.toggle('on', soundOn);
-    els.soundBtn.setAttribute('aria-pressed', soundOn);
-    // Initialise AudioContext on first user interaction
-    if (soundOn) getAudioCtx();
-  });
-
-  els.hapticBtn.addEventListener('click', () => {
-    hapticOn = !hapticOn;
-    els.hapticBtn.classList.toggle('on', hapticOn);
-    els.hapticBtn.setAttribute('aria-pressed', hapticOn);
-    if (hapticOn) vibrate([10]);
   });
 })();
 </script>
