@@ -1,6 +1,6 @@
 # Stillness · Box Breathing
 
-A minimal, beautiful box breathing app built for calm focus. No ads, no accounts, no noise.
+A minimal, beautiful, and premium box breathing app built for calm focus. No ads, no accounts, no noise.
 
 **[→ Live App](https://your-username.github.io/for-breath/)**
 
